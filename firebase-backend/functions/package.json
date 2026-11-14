@@ -1,0 +1,12 @@
+{
+  "name": "ak-messenger-functions",
+  "description": "Firebase Cloud Functions for AK Messenger Push Notifications, Call Alerts, and Story Expiration",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

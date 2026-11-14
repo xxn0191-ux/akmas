@@ -1,0 +1,6 @@
+{
+  "name": "AK Messenger",
+  "description": "WhatsApp-style real-time messaging platform with separate User and Admin Android apps backed by Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
