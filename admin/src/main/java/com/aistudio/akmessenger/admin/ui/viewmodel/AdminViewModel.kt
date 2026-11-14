@@ -72,75 +72,23 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AdminDashboardStats())
 
-    private val _currentAdmin = MutableStateFlow<AdminRecord?>(null)
-    val currentAdmin: StateFlow<AdminRecord?> = _currentAdmin.asStateFlow()
-
-    private val _authBusy = MutableStateFlow(false)
-    val authBusy: StateFlow<Boolean> = _authBusy.asStateFlow()
-
-    private val _authError = MutableStateFlow<String?>(null)
-    val authError: StateFlow<String?> = _authError.asStateFlow()
+    private val _currentAdmin = MutableStateFlow(
+        AdminRecord(
+            uid = "ak_direct_admin",
+            email = "Direct Admin Console",
+            role = "superadmin"
+        )
+    )
+    val currentAdmin: StateFlow<AdminRecord> = _currentAdmin.asStateFlow()
 
     private val _statusToast = MutableStateFlow<String?>(null)
     val statusToast: StateFlow<String?> = _statusToast.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            val s = syncEngine.prefs.current()
-            if (s.idToken.isNotBlank() && s.uid.isNotBlank()) {
-                syncEngine.activeToken = s.idToken
-                val verified = syncEngine.rtdbClient.get<AdminRecord>("admins/${s.uid}", s.idToken).getOrNull()
-                if (verified != null) {
-                    _currentAdmin.value = verified.copy(uid = s.uid, email = s.email)
-                    syncEngine.startRealtimeListener(viewModelScope, includeAdminNodes = true)
-                }
-            }
-        }
+        syncEngine.startRealtimeListener(viewModelScope, includeAdminNodes = true)
     }
 
-    fun clearError() { _authError.value = null }
     fun clearToast() { _statusToast.value = null }
-
-    fun loginAdmin(
-        email: String,
-        password: String,
-        pin: String,
-        rememberMe: Boolean,
-        onSuccess: () -> Unit
-    ) {
-        viewModelScope.launch {
-            _authBusy.value = true
-            _authError.value = null
-            if (rememberMe) syncEngine.prefs.setRememberAdminEmail(email.trim())
-            else syncEngine.prefs.setRememberAdminEmail("")
-
-            val res = repo.loginAdmin(email, password, pin)
-            _authBusy.value = false
-            res.onSuccess { admin ->
-                _currentAdmin.value = admin
-                syncEngine.startRealtimeListener(viewModelScope, includeAdminNodes = true)
-                onSuccess()
-            }.onFailure { err ->
-                _authError.value = err.message ?: "Admin login failed"
-            }
-        }
-    }
-
-    fun sendForgotPassword(email: String) {
-        viewModelScope.launch {
-            val res = syncEngine.authClient.sendPasswordResetEmail(email)
-            res.onSuccess { _statusToast.value = "Password reset link sent to $email" }
-                .onFailure { _authError.value = it.message }
-        }
-    }
-
-    fun logout(onDone: () -> Unit) {
-        viewModelScope.launch {
-            _currentAdmin.value?.let { repo.logoutAdmin(it) }
-            _currentAdmin.value = null
-            onDone()
-        }
-    }
 
     fun refreshNow() {
         viewModelScope.launch {
@@ -150,7 +98,7 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun performAdminAction(block: suspend (AdminRecord) -> Result<Any?>, successMsg: String) {
-        val admin = _currentAdmin.value ?: return
+        val admin = _currentAdmin.value
         viewModelScope.launch {
             val res = block(admin)
             _statusToast.value = if (res.isSuccess) successMsg else (res.exceptionOrNull()?.message ?: "Action failed")

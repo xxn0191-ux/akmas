@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -43,8 +42,7 @@ import com.aistudio.akmessenger.shared.ui.UserAvatar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
-    viewModel: AdminViewModel,
-    onLoggedOut: () -> Unit
+    viewModel: AdminViewModel
 ) {
     val admin by viewModel.currentAdmin.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
@@ -69,7 +67,7 @@ fun AdminDashboardScreen(
                         Column {
                             Text("AK Messenger Admin", fontFamily = AkFonts.SpaceGrotesk, fontWeight = FontWeight.Bold)
                             Text(
-                                text = "${admin?.email.orEmpty()} • $rtdbStatus",
+                                text = "${admin.email} • $rtdbStatus",
                                 fontFamily = AkFonts.JetBrainsMono,
                                 fontSize = 11.sp,
                                 color = if (rtdbStatus is RtdbStatus.Connected) NeonMint else NeonCyan
@@ -78,9 +76,6 @@ fun AdminDashboardScreen(
                     },
                     actions = {
                         IconButton(onClick = { viewModel.refreshNow() }) { Icon(Icons.Filled.Sync, "Refresh", tint = NeonCyan) }
-                        IconButton(onClick = { viewModel.logout(onLoggedOut) }, modifier = Modifier.testTag("admin_logout_button")) {
-                            Icon(Icons.AutoMirrored.Filled.Logout, "Logout", tint = AdminAlert)
-                        }
                     }
                 )
                 if (toast != null) {
